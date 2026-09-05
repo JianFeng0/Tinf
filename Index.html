@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="format-detection" content="telephone=no">
+    <title>工作任务工作台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #f3f4f6;
+            padding: 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+        .page-header {
+            background: #2563eb;
+            color: white;
+            padding: 22px 28px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-start;
+            gap:16px;
+            flex-wrap:wrap;
+        }
+        .page-header h1 {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+        .header-left{
+            flex-shrink: 0;
+        }
+        .header-actions{
+            margin-top:10px;
+            display:flex;
+            gap:8px;
+            flex-wrap: wrap;
+        }
+        /* 头部统计：大屏每行最多3个，自动两行 */
+        .header-stat-bar{
+            -webkit-display: grid;
+            display:grid;
+            grid-template-columns: repeat(3, minmax(110px, 1fr));
+            gap:8px;
+        }
+        .header-stat-bar .stat-transparent{
+            background:transparent !important;
+            box-shadow:none !important;
+            padding:4px 6px;
+        }
+        .header-stat-bar .stat-transparent .label{
+            font-size:12px;
+            color:#e2e8f0;
+        }
+        .header-stat-bar .stat-transparent .val{
+            font-size:18px;
+            font-weight:bold;
+            color:#ffffff;
+            margin-top:2px;
+        }
+        @media(max-width:960px){
+            .page-header{
+                flex-direction:column;
+            }
+            .header-stat-bar{
+                width:100%;
+                grid-template-columns: repeat(auto-fit,minmax(110px,1fr));
+            }
+        }
+        .tab-bar{
+            display:flex;
+            gap:8px;
+            margin-bottom:16px;
+            flex-wrap: wrap;
+            position: sticky;
+            top:0;
+            background:#f3f4f6;
+            padding-top:8px;
+            padding-bottom:8px;
+            z-index:99;
+            -webkit-position:-webkit-sticky;
+            position: sticky;
+        }
+        .tab-btn{
+            padding:8px 16px;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+            font-size:14px;
+            -webkit-appearance: none;
+        }
+        .tab-btn.active{
+            background:#2563eb;
+            color:#fff;
+        }
+        .tab-btn.inactive{
+            background:#e5e7eb;
+            color:#333;
+        }
+        .page-view{
+            display:none;
+        }
+        .page-view.active{
+            display:block;
+        }
+        .search-wrap{
+            background:#fff;
+            padding:12px 16px;
+            border-radius:10px;
+            margin-bottom:16px;
+            box-shadow:0 1px 4px rgba(0,0,0,0.06);
+        }
+        .search-wrap input{
+            width:100%;
+            padding:10px 12px;
+            border:1px solid #d1d5db;
+            border-radius:8px;
+            font-size:14px;
+            outline:none;
+        }
+        .search-wrap input:focus{
+            border-color:#2563eb;
+        }
+        .stat-item {
+            background: #fff;
+            padding:16px;
+            border-radius:10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .stat-item .label {
+            font-size:13px;
+            color:#6b7280;
+        }
+        .stat-item .val {
+            font-size:24px;
+            font-weight:bold;
+            margin-top:4px;
+        }
+        .main-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap:20px;
+        }
+        .panel-card {
+            background:#ffffff;
+            border-radius:12px;
+            padding:20px;
+            box-shadow:0 1px 6px rgba(0,0,0,0.07);
+            margin-bottom:16px;
+        }
+        .form-title {
+            font-size:17px;
+            font-weight:600;
+            margin-bottom:14px;
+            color:#1f2937;
+        }
+        input, textarea, select {
+            width:100%;
+            padding:10px 12px;
+            border:1px solid #d1d5db;
+            border-radius:8px;
+            font-size:14px;
+            margin-bottom:12px;
+            outline:none;
+        }
+        input[type="date"]{
+            -webkit-appearance: none;
+        }
+        input:focus, textarea:focus{
+            border-color:#2563eb;
+        }
+        textarea{
+            min-height:80px;
+            resize:vertical;
+        }
+        .row-two{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:10px;
+        }
+        button{
+            padding:10px 16px;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+            font-size:14px;
+            font-weight:500;
+            -webkit-appearance: none;
+        }
+        .btn-sm{
+            padding:4px 8px;
+            font-size:12px;
+        }
+        .btn-primary{
+            background:#2563eb;
+            color:white;
+        }
+        .btn-success{
+            background:#059669;
+            color:white;
+        }
+        .btn-warning{
+            background:#d97706;
+            color:white;
+        }
+        .btn-danger{
+            background:#dc2626;
+            color:white;
+        }
+        .btn-default{
+            background:#6b7280;
+            color:white;
+        }
+        .btn-group{
+            display:flex;
+            gap:8px;
+            flex-wrap:wrap;
+            margin:10px 0;
+        }
+        .task-group{
+            margin-bottom:24px;
+            border-radius:10px;
+        }
+        .group-header{
+            padding:12px 16px;
+            font-weight:600;
+            font-size:15px;
+            color:white;
+            position: sticky;
+            top: 60px;
+            z-index: 10;
+            border-radius:8px 8px 0 0;
+            -webkit-position:-webkit-sticky;
+            position: sticky;
+        }
+        .group-overdue{
+            background-color:#ea580c;
+        }
+        .group-today{
+            background-color:#2563eb;
+        }
+        .group-future{
+            background-color:#0891b2;
+        }
+        .group-history{
+            background-color:#4b5563;
+        }
+        .task-list-wrap{
+            border:1px solid #e5e7eb;
+            padding:10px;
+            background:#fff;
+        }
+        .task-item{
+            display:flex;
+            align-items: stretch;
+            gap:12px;
+            padding:12px;
+            border-radius:8px;
+            margin-bottom:8px;
+            border:1px solid #eee;
+        }
+        .task-content{
+            flex:1;
+            min-width:0;
+            display: flex;
+            flex-direction: column;
+        }
+        .task-title-row{
+            display:flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap:10px;
+        }
+        .task-title{
+            font-weight:700;
+            margin-bottom:4px;
+            word-break:break-all;
+        }
+        .task-loop-tip{
+            white-space: nowrap;
+            flex-shrink:0;
+            color:#0891b2;
+        }
+        .task-actions{
+            display:flex;
+            gap:4px;
+            flex:none;
+            align-items: center;
+        }
+        .task-actions button.btn-sm{
+            height: 100%;
+            padding-left:10px;
+            padding-right:10px;
+        }
+        .task-item > input[type="checkbox"] {
+            width: 18px;
+            height:18px;
+            margin-top:2px;
+            flex:none;
+            cursor:pointer;
+        }
+        .task-overdue{
+            background-color:#fff7ed;
+            border-left:4px solid #ea580c;
+        }
+        .task-today-undone{
+            background-color:#eff6ff;
+            border-left:4px solid #2563eb;
+        }
+        .task-future{
+            background-color:#ecfeff;
+            border-left:4px solid #0891b2;
+        }
+        .task-history{
+            background-color:#e9ecef;
+            border-left:4px solid #6c757d;
+        }
+        .task-meta{
+            font-size:12px;
+            color:#666;
+            margin-top:4px;
+            line-height:1.5;
+        }
+        .task-done-text{
+            text-decoration: none;
+            color:#444;
+        }
+        .empty-tip{
+            padding:20px;
+            text-align:center;
+            color:#9ca3af;
+            font-size:14px;
+        }
+        .modal-mask{
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 9999;
+        }
+        .modal-box{
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 520px;
+            max-width: 94vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-footer{
+            display:flex;
+            justify-content:flex-end;
+            gap:10px;
+            margin-top:12px;
+        }
+        .main-layout > div:first-child{
+            position: sticky;
+            top: 60px;
+            align-self:flex-start;
+            height: fit-content;
+            -webkit-position:-webkit-sticky;
+            position: sticky;
+        }
+        @media(max-width:920px){
+            .tab-bar,.main-layout > div:first-child,.group-header{
+                position:relative !important;
+            }
+            .main-layout {
+                grid-template-columns:1fr;
+            }
+            .archive-layout{
+                grid-template-columns:1fr;
+            }
+            .archive-layout > div:first-child{
+                position:relative !important;
+            }
+        }
+        .patient-group-block{
+            background:#ffffff;
+            border-radius:10px;
+            margin-bottom:20px;
+            border:1px solid #ddd;
+            overflow:hidden;
+        }
+        .patient-group-header{
+            background:#2f4f7f;
+            color:#fff;
+            padding:14px 18px;
+            font-size:17px;
+            font-weight:bold;
+        }
+        .patient-group-body{
+            padding:12px;
+        }
+        .patient-group-body .task-item{
+            margin-bottom:10px;
+        }
+        .patient-group-body .task-item:last-child{
+            margin-bottom:0;
+        }
+        .archive-layout{
+            display:grid;
+            grid-template-columns:280px 1fr;
+            gap:16px;
+        }
+        .archive-layout > div:first-child{
+            position: sticky;
+            top:70px;
+            align-self: flex-start;
+            height: fit-content;
+            -webkit-position:-webkit-sticky;
+            position: sticky;
+        }
+        .patient-side-item{
+            padding:8px 10px;
+            border-radius:6px;
+            cursor:pointer;
+            margin-bottom:4px;
+            border:1px solid #eee;
+        }
+        .patient-side-item:hover{
+            background:#eef2ff;
+        }
+        .patient-side-item.active{
+            background:#2563eb;
+            color:#ffffff;
+            border-color:#2563eb;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="page-header">
+        <div class="header-left">
+           <h1>📋 工作任务工作台</h1>
+            <div id="todayShow"></div>
+            <div class="header-actions">
+                <button class="btn-sm btn-success" onclick="exportTasks()">💾导出任务备份</button>
+                <button class="btn-sm btn-warning" onclick="document.getElementById('importTaskFile').click()">📂导入任务备份</button>
+                <input type="file" id="importTaskFile" accept=".json,.txt" style="display:none" onchange="importTasks(this)">
+            </div>
+        </div>
+        <div class="header-stat-bar" id="headerStatWrap">
+            <div class="stat-item stat-transparent">
+                <div class="label">逾期任务</div>
+                <div class="val" id="statOverdue">0</div>
+            </div>
+            <div class="stat-item stat-transparent">
+                <div class="label">今日待完成</div>
+                <div class="val" id="statTodayUndo">0</div>
+            </div>
+            <div class="stat-item stat-transparent">
+                <div class="label">未来待办</div>
+                <div class="val" id="statFuture">0</div>
+            </div>
+            <div class="stat-item stat-transparent">
+                <div class="label">全部待办</div>
+                <div class="val" id="statTodoAll">0</div>
+            </div>
+            <div class="stat-item stat-transparent">
+                <div class="label">历史已完成总数</div>
+                <div class="val" id="statHistoryTotal">0</div>
+            </div>
+            <div class="stat-item stat-transparent">
+                <div class="label">患者总数</div>
+                <div class="val" id="statGroupPatientTotal">0</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="tab-bar">
+    <button class="tab-btn active" id="tabMain" onclick="switchPage('main')">📝待办任务</button>
+    <button class="tab-btn inactive" id="tabHistory" onclick="switchPage('history')">📜历史已完成</button>
+    <button class="tab-btn inactive" id="tabArchive" onclick="switchPage('archive')">📂患者汇总</button>
+    <button class="tab-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆️到顶部</button>
+    <button class="tab-btn" onclick="scrollToBottom()">⬇️到底部</button>
+</div>
+    <div class="page-view active" id="pageMain">
+        <div class="main-layout">
+            <div>
+                <div class="panel-card">
+                     <div class="form-title">➕ 创建新任务</div>
+                        <input type="text" id="taskTitle" placeholder="任务名称">
+                        <textarea id="taskDesc" placeholder="任务描述"></textarea>
+                        <input type="date" id="taskDueDate">
+                        <div class="row-two">
+                            <div>
+                                <label style="font-size:13px;">剩余循环次数(0=不循环)</label>
+                                <input type="number" id="loopCount" min="0" value="0" placeholder="完成后自动生成下一条">
+                            </div>
+                            <div>
+                                <label style="font-size:13px;">循环间隔(天)</label>
+                                <input type="number" id="loopGap" min="1" value="1">
+                            </div>
+                        </div>
+                        <div style="font-size:12px;color:#666;margin-bottom:8px;">说明：完成本条任务后，才自动生成下一条循环任务</div>
+                        <button class="btn-primary" onclick="addSingleTask()">创建任务</button>
+                    </div>
+                    <div class="panel-card">
+                        <div class="form-title">🔍搜索待办任务</div>
+                        <input id="todoSearchInput" placeholder="搜索待办任务标题 / 描述" oninput="renderAll()">
+                    </div>
+                    <div class="panel-card">
+                        <div class="form-title">✅ 批量操作</div>
+                        <div class="btn-group">
+                            <button class="btn-success" onclick="batchComplete()">批量勾选项标记完成</button>
+                            <button class="btn-danger" onclick="clearAllData()">清除全部数据</button>
+                         </div>
+                         <div style="font-size:12px;color:#666;margin-top:6px;">勾选任务前复选框后执行批量完成；清除全部会删除所有任务，无法恢复</div>
+                    </div>
+                </div>
+            <div>
+                <div class="task-group">
+                    <div class="group-header group-overdue">⚠️ 逾期任务（今日之前未完成）</div>
+                    <div class="task-list-wrap" id="groupOverdue"></div>
+                </div>
+                <div class="task-group">
+                    <div class="group-header group-today" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>📅 今日任务</span>
+                        <button class="btn-sm" onclick="exportTodayTasks()">导出今日任务</button>
+                    </div>
+                    <div class="task-list-wrap" id="groupToday"></div>
+                </div>
+                <div class="task-group">
+                    <div class="group-header group-future">📆 未来任务</div>
+                    <div class="task-list-wrap" id="groupFuture"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="page-view" id="pageHistory">
+        <div class="search-wrap">
+            <input id="historySearchInput" placeholder="搜索任务名称 / 描述" oninput="renderHistoryView()">
+        </div>
+        <div class="task-group">
+            <div class="group-header group-history" style="display:flex;justify-content:space-between;align-items:center;">
+    <span>📜 历史已完成任务</span>
+    <button class="btn-sm" onclick="exportAllDoneTasks()">导出全部已完成任务</button>
+            </div>
+            <div class="task-list-wrap" id="groupHistory"></div>
+        </div>
+    </div>
+<div class="page-view" id="pageArchive">
+    <div class="archive-layout">
+        <div class="panel-card">
+            <div class="form-title">👤患者列表</div>
+            <input id="patientGroupSearchInput" placeholder="🔍搜索患者姓名" oninput="renderPatientSideList()">
+            <div id="patientSideListWrap" style="max-height:60vh;overflow-y:auto;margin-top:10px;"></div>
+        </div>
+        <div class="panel-card">
+            <div class="form-title">📋患者已完成事项</div>
+            <div id="patientRightContent" class="empty-tip" style="padding:30px;">请在左侧点击患者姓名查看事项</div>
+        </div>
+    </div>
+</div>
+<div class="modal-mask" id="editModal">
+    <div class="modal-box">
+        <div class="form-title">✏️编辑任务</div>
+        <input type="hidden" id="editTaskId">
+        <input type="hidden" id="editIsHistory">
+        <div id="editTodoFields">
+            <input type="text" id="editTitle" placeholder="任务名称">
+            <textarea id="editDesc" placeholder="任务描述"></textarea>
+            <input type="date" id="editDueDate">
+            <div class="row-two">
+                <div>
+                    <label style="font-size:13px;">剩余循环次数</label>
+                    <input type="number" id="editLoopRemain" min="0" value="0">
+                </div>
+                <div>
+                    <label style="font-size:13px;">循环间隔(天)</label>
+                    <input type="number" id="editLoopGap" min="1" value="1">
+                </div>
+            </div>
+        </div>
+        <div id="editHistoryFields" style="display:none;">
+            <div style="padding:10px;border-radius:6px;background:#f3f4f6;margin-bottom:12px;">
+                <div style="font-weight:500;margin-bottom:6px;" id="hEditTitle"></div>
+                <div class="task-meta">截止日期：<span id="hEditDue"></span></div>
+                <div class="task-meta">完成日期：<span id="hEditFinish"></span></div>
+            </div>
+            <label style="font-size:13px;color:#374151;">修改任务描述：</label>
+            <textarea id="hEditDesc" placeholder="任务描述" style="margin-top:6px;"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-default" onclick="closeEditModal()">取消</button>
+            <button class="btn-primary" onclick="saveEditTask()">保存修改</button>
+        </div>
+    </div>
+</div>
+<script>
+let selectedPatientName = null;
+function renderPatientSideList(){
+    loadStorage();
+    const keyword = (document.getElementById('patientGroupSearchInput').value||'').toLowerCase().trim();
+    let doneItems = [...taskList.filter(x=>x.done)];
+    const groupMap = {};
+    doneItems.forEach(item=>{
+        const name = (item.title||'未知患者').trim();
+        if(!groupMap[name]){
+            groupMap[name] = [];
+        }
+        groupMap[name].push(item);
+    });
+    let groupKeys = Object.keys(groupMap);
+    if(keyword){
+        groupKeys = groupKeys.filter(name=> name.toLowerCase().includes(keyword));
+    }
+    document.getElementById('statGroupPatientTotal').innerText = groupKeys.length;
+    let html = '';
+    if(groupKeys.length===0){
+        html = `<div class="empty-tip">暂无患者数据</div>`;
+    }else{
+        groupKeys.forEach(name=>{
+            const cnt = groupMap[name].length;
+            const activeCls = (selectedPatientName === name) ? 'active' : '';
+            html += `<div class="patient-side-item ${activeCls}" onclick="selectPatient('${escapeHtml(name)}')">${escapeHtml(name)} （${cnt}条）</div>`;
+        });
+    }
+    document.getElementById('patientSideListWrap').innerHTML = html;
+    renderPatientRightPanel(groupMap);
+}
+function selectPatient(name){
+    selectedPatientName = name;
+    renderPatientSideList();
+}
+function renderPatientRightPanel(groupMap){
+    const rightDom = document.getElementById('patientRightContent');
+    if(!selectedPatientName || !groupMap[selectedPatientName]){
+        rightDom.innerHTML = `<div class="empty-tip" style="padding:30px;">请在左侧点击患者姓名查看事项</div>`;
+        return;
+    }
+    const list = groupMap[selectedPatientName];
+    list.sort((a,b)=>{
+        let fa = a.finishDate || "0000-00-00";
+        let fb = b.finishDate || "0000-00-00";
+        if(fb>fa) return -1;
+        if(fb<fa) return 1;
+        return 0;
+    });
+    const itemsHtml = list.map(t=>{
+        const descText = t.desc?.trim() || "【无备注】";
+        return `
+<div class="task-item task-history">
+    <div class="task-content">
+        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+            <div class="task-title">📅截止：${escapeHtml(t.dueDate)}｜✅完成：${escapeHtml(t.finishDate||'-')}</div>
+            <div class="task-title" style="flex-shrink:1;color:#000;">${escapeHtml(descText)}</div>
+        </div>
+    </div>
+    <div class="task-actions">
+        <button class="btn-sm btn-warning" onclick="openEditModal('${t.id}', true)">修改描述</button>
+        <button class="btn-sm btn-danger" onclick="delTask('${t.id}')">删除</button>
+    </div>
+</div>`;
+    }).join('');
+    rightDom.innerHTML = `
+<h3 style="margin-bottom:12px;">👤 ${escapeHtml(selectedPatientName)} 的已完成事项</h3>
+${itemsHtml}
+`;
+}
+const todayStr = (()=>{
+    const d=new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+})();
+const tomorrowObj = new Date();
+tomorrowObj.setDate(tomorrowObj.getDate() + 1);
+const tomorrowStr = `${tomorrowObj.getFullYear()}-${String(tomorrowObj.getMonth()+1).padStart(2,'0')}-${String(tomorrowObj.getDate()).padStart(2,'0')}`;
+document.getElementById('todayShow').innerText = `当前日期：${todayStr}`;
+function escapeHtml(str){
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace( />/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+function safeExportJson(data, fileName){
+    const jsonStr = JSON.stringify(data, null, 2);
+    try {
+        const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.style.position = 'fixed';
+        a.style.left = '-9999px';
+        a.style.top = '-9999px';
+        document.body.appendChild(a);
+        requestAnimationFrame(() => {
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 2000);
+        });
+    } catch (e) {
+        const win = window.open('', '_blank');
+        win.document.open('text/plain', 'replace');
+        win.document.write(jsonStr);
+        win.document.close();
+        win.document.title = fileName;
+        alert('自动下载已禁用，已在新窗口打开纯文本数据。\n请按 Ctrl+S 保存为 .json 文件，即可正常导入。');
+    }
+}
+function safeJsonParse(text){
+    if(text.charCodeAt(0) === 0xFEFF){
+        text = text.slice(1);
+    }
+    text = text.trim();
+    return JSON.parse(text);
+}
+function clearAllData(){
+    if(!confirm("⚠️警告：将会删除所有任务数据，删除后无法恢复！\n确定要全部清除吗？")){
+        return;
+    }
+    taskList = [];
+    localStorage.removeItem(TASK_STORAGE_KEY);
+    renderAll();
+    alert("全部任务数据已清除");
+}
+function switchPage(mode){
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.classList.add('inactive');
+    });
+    document.querySelectorAll('.page-view').forEach(p => {
+        p.classList.remove('active');
+    });
+    if(mode === 'main'){
+        document.getElementById('pageMain').classList.add('active');
+        document.getElementById('tabMain').classList.add('active');
+        document.getElementById('tabMain').classList.remove('inactive');
+        renderAll();
+    } else if(mode === 'history'){
+        document.getElementById('pageHistory').classList.add('active');
+        document.getElementById('tabHistory').classList.add('active');
+        document.getElementById('tabHistory').classList.remove('inactive');
+        renderHistoryView();
+    }else {
+        document.getElementById('pageArchive').classList.add('active');
+        document.getElementById('tabArchive').classList.add('active');
+        document.getElementById('tabArchive').classList.remove('inactive');
+       renderPatientSideList();
+    }
+}
+const TASK_STORAGE_KEY = "workbench_tasks_v6_fix";
+let taskList = [];
+function loadStorage(){
+    const raw = localStorage.getItem(TASK_STORAGE_KEY);
+    if(raw){
+        try {
+            taskList = JSON.parse(raw);
+        } catch(e) {
+            taskList = [];
+        }
+    } else {
+        taskList = [];
+    }
+}
+function saveStorage(){
+    localStorage.setItem(TASK_STORAGE_KEY, JSON.stringify(taskList));
+}
+function genId(){
+    return Date.now() + Math.random().toString(36).slice(2);
+}
+function formatDate(d){
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function addSingleTask(){
+    const title = document.getElementById('taskTitle').value.trim();
+    const desc = document.getElementById('taskDesc').value.trim();
+    const due = document.getElementById('taskDueDate').value;
+    const loopCnt = Number(document.getElementById('loopCount').value) || 0;
+    const gap = Number(document.getElementById('loopGap').value) || 1;
+    if(!title || !due){
+        alert("请填写任务名称和截止日期");
+        return;
+    }
+    taskList.push({
+        id: genId(),
+        title,
+        desc,
+        dueDate: due,
+        finishDate: null,
+        done: false,
+        checked: false,
+        loopRemain: loopCnt,
+        loopGap: gap
+    });
+    saveStorage();
+    clearForm();
+    renderAll();
+}
+function clearForm(){
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskDesc').value = '';
+    document.getElementById('taskDueDate').value = todayStr;
+    document.getElementById('loopCount').value = 0;
+    document.getElementById('loopGap').value = 1;
+}
+function completeTaskAndGenNext(taskItem){
+    taskItem.done = true;
+    taskItem.finishDate = todayStr;
+    if(taskItem.loopRemain > 0){
+        const nextDateObj = new Date(taskItem.dueDate);
+        nextDateObj.setDate(nextDateObj.getDate() + taskItem.loopGap);
+        const nextDue = formatDate(nextDateObj);
+        taskList.push({
+            id: genId(),
+            title: taskItem.title,
+            desc: taskItem.desc,
+            dueDate: nextDue,
+            finishDate: null,
+            done: false,
+            checked: false,
+            loopRemain: taskItem.loopRemain - 1,
+            loopGap: taskItem.loopGap
+        });
+    }
+}
+function batchComplete(){
+    taskList.forEach(t => {
+        if(t.checked && !t.done){
+            completeTaskAndGenNext(t);
+        }
+    });
+    saveStorage();
+    renderAll();
+}
+function toggleCheck(id){
+    const t = taskList.find(x => x.id === id);
+    if(t){
+        t.checked = !t.checked;
+        saveStorage();
+        renderAll();
+    }
+}
+function completeById(id){
+    const t = taskList.find(x => x.id === id);
+    if(!t || t.done) return;
+    if(t.dueDate > todayStr){
+        if(!confirm("该任务属于未来任务，确定要标记为已完成吗？")){
+            return;
+        }
+    }
+    completeTaskAndGenNext(t);
+    saveStorage();
+    renderAll();
+}
+function delTask(id){
+    taskList = taskList.filter(x => x.id !== id);
+    saveStorage();
+    if(document.getElementById('pageMain').classList.contains('active')){
+        renderAll();
+    } else if(document.getElementById('pageHistory').classList.contains('active')){
+        renderHistoryView();
+    } else {
+        selectedPatientName = null;
+        renderPatientSideList();
+    }
+}
+function openEditModal(id, isHistory){
+    const t = taskList.find(x => x.id === id);
+    if(!t) return;
+    document.getElementById('editTaskId').value = t.id;
+    document.getElementById('editIsHistory').value = isHistory ? "1" : "0";
+    if(isHistory){
+        document.getElementById('editTodoFields').style.display = 'none';
+        document.getElementById('editHistoryFields').style.display = 'block';
+        document.getElementById('hEditTitle').innerText = escapeHtml(t.title);
+        document.getElementById('hEditDue').innerText = t.dueDate;
+        document.getElementById('hEditFinish').innerText = t.finishDate || '-';
+        document.getElementById('hEditDesc').value = t.desc || '';
+    } else {
+        document.getElementById('editTodoFields').style.display = 'block';
+        document.getElementById('editHistoryFields').style.display = 'none';
+        document.getElementById('editTitle').value = t.title;
+        document.getElementById('editDesc').value = t.desc || '';
+        document.getElementById('editDueDate').value = t.dueDate;
+        document.getElementById('editLoopRemain').value = t.loopRemain || 0;
+        document.getElementById('editLoopGap').value = t.loopGap || 1;
+    }
+    document.getElementById('editModal').style.display = 'block';
+}
+function closeEditModal(){
+    document.getElementById('editModal').style.display = 'none';
+}
+function saveEditTask(){
+    const id = document.getElementById('editTaskId').value;
+    const isHistory = document.getElementById('editIsHistory').value === "1";
+    const t = taskList.find(x => x.id === id);
+    if(!t) return;
+    if(isHistory){
+        t.desc = document.getElementById('hEditDesc').value.trim();
+    } else {
+        const newTitle = document.getElementById('editTitle').value.trim();
+        const newDue = document.getElementById('editDueDate').value;
+        if(!newTitle || !newDue){
+            alert("任务名称和截止日期不能为空");
+            return;
+        }
+        t.title = newTitle;
+        t.desc = document.getElementById('editDesc').value.trim();
+        t.dueDate = newDue;
+        t.loopRemain = Number(document.getElementById('editLoopRemain').value) || 0;
+        t.loopGap = Number(document.getElementById('editLoopGap').value) || 1;
+    }
+    saveStorage();
+    closeEditModal();
+    if(document.getElementById('pageMain').classList.contains('active')){
+        renderAll();
+    } else {
+        renderHistoryView();
+    }
+}
+function exportTasks(){
+    safeExportJson(taskList, `任务备份_${todayStr}.json`);
+}
+function exportTodayTasks(){
+  const today = todayStr;
+  const todayAll = taskList.filter(t=>t.dueDate === today);
+  if(todayAll.length===0){
+    alert("今日没有任务可以导出");
+    return;
+  }
+  const unDoneList = todayAll.filter(x=>!x.done);
+  const doneList = todayAll.filter(x=>x.done);
+  let htmlBody = `<h2 style="font-size:12pt;">今日任务列表 ${today}</h2><hr />`;
+  htmlBody += `<h3 style="color:red;font-size:10.5pt;">🔴 未完成任务（${unDoneList.length}条）</h3>`;
+  if(unDoneList.length>0){
+    unDoneList.forEach(item=>{
+      htmlBody += `
+<div style="color:#c00;font-size:10.5pt;">
+<strong>${escapeHtml(item.title)}</strong>｜截止：${escapeHtml(item.dueDate)}
+</div>`;
+      const descVal = (item.desc||"").trim();
+      if(descVal !== "" && descVal !== "无"){
+        htmlBody += `
+<div style="font-size:11pt;margin:4px 0 8px 16px;">
+描述：${escapeHtml(descVal)}
+</div>`;
+      }
+      htmlBody += `<hr size="1" />`;
+    });
+  }else{
+    htmlBody += `<p style="font-size:10.5pt;">暂无未完成任务</p><hr />`;
+  }
+  htmlBody += `<h3 style="color:blue;font-size:10.5pt;">🔵 已完成任务（${doneList.length}条）</h3>`;
+  if(doneList.length>0){
+    doneList.forEach(item=>{
+      htmlBody += `
+<div style="color:#0066cc;font-size:10.5pt;">
+<strong>${escapeHtml(item.title)}</strong>｜截止：${escapeHtml(item.dueDate)}｜完成时间：${escapeHtml(item.finishDate||"")}
+</div>`;
+      const descVal = (item.desc||"").trim();
+      if(descVal !== "" && descVal !== "无"){
+        htmlBody += `
+<div style="font-size:11pt;margin:4px 0 8px 16px;">
+描述：${escapeHtml(descVal)}
+</div>`;
+      }
+      htmlBody += `<hr size="1" />`;
+    });
+  }else{
+    htmlBody += `<p style="font-size:10.5pt;">暂无已完成任务</p>`;
+  }
+  const wordFull = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+<head>
+<meta charset="UTF-8">
+<!--[if gte mso 9]>
+<xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml>
+<![endif]-->
+</head>
+<body>
+${htmlBody}
+</body>
+</html>
+`;
+  const blob = new Blob(['\uFEFF'+wordFull], {type:"application/msword;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `今日任务_${today}.doc`;
+  a.style.position='fixed';
+  a.style.left='-9999px';
+  a.style.top='-9999px';
+  document.body.appendChild(a);
+  requestAnimationFrame(()=>{
+    a.click();
+    setTimeout(()=>{
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },1500);
+  });
+}
+function exportAllDoneTasks(){
+  let doneList = taskList.filter(t=>t.done);
+  if(doneList.length===0){
+    alert("暂无已完成任务可以导出");
+    return;
+  }
+  doneList.sort((a,b)=>{
+      if(a.dueDate < b.dueDate) return -1;
+      if(a.dueDate > b.dueDate) return 1;
+      return 0;
+  });
+  const groupMap = {};
+  doneList.forEach(item=>{
+      const d = item.dueDate;
+      if(!groupMap[d]){
+          groupMap[d] = [];
+      }
+      groupMap[d].push(item);
+  });
+  const dateKeys = Object.keys(groupMap).sort();
+  let htmlBody = `<h2 style="font-size:12pt;">全部已完成任务列表</h2><hr />`;
+  dateKeys.forEach(dateStr=>{
+      const items = groupMap[dateStr];
+      htmlBody += `<h3 style="color:#222;font-size:10.5pt;">📅 ${escapeHtml(dateStr)} ：</h3>`;
+      items.forEach(item=>{
+          htmlBody += `
+<div style="color:#0066cc;font-size:10.5pt;margin-left:12px;">
+<strong>${escapeHtml(item.title)}</strong>｜完成时间：${escapeHtml(item.finishDate||"")}
+</div>`;
+          const descVal = (item.desc||"").trim();
+          if(descVal !== "" && descVal !== "无"){
+            htmlBody += `
+<div style="font-size:11pt;margin:4px 0 8px 28px;">
+描述：${escapeHtml(descVal)}
+</div>`;
+          }
+      });
+      htmlBody += `<hr size="2" style="margin:12px 0;" />`;
+  });
+  const wordFull = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+<head>
+<meta charset="UTF-8">
+<!--[if gte mso 9]>
+<xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml>
+<![endif]-->
+</head>
+<body>
+${htmlBody}
+</body>
+</html>
+`;
+  const blob = new Blob(['\uFEFF'+wordFull], {type:"application/msword;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `全部已完成任务_${todayStr}.doc`;
+  a.style.position='fixed';
+  a.style.left='-9999px';
+  a.style.top='-9999px';
+  document.body.appendChild(a);
+  requestAnimationFrame(()=>{
+    a.click();
+    setTimeout(()=>{
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },1500);
+  });
+}
+function importTasks(fileDom){
+    const file = fileDom.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+        try {
+            const imported = safeJsonParse(e.target.result);
+            if(!Array.isArray(imported)) throw new Error("文件内容不是任务数组格式");
+            if(confirm(`导入共 ${imported.length} 条任务，重复ID条目将自动跳过，仅新增不存在的数据，确定继续吗？`)){
+                const localIds = new Set(taskList.map(item => item.id));
+                const newItems = imported.filter(item => !localIds.has(item.id));
+                taskList.push(...newItems);
+                saveStorage();
+                alert(`导入完成：总文件${imported.length}条，新增${newItems.length}条，跳过${imported.length - newItems.length}条重复数据`);
+                switchPage('main');
+            }
+        } catch(err) {
+            alert("导入失败：文件格式不正确\n\n可能原因：\n1. 文件不是标准JSON格式\n2. 手动保存时存成了网页而不是纯文本\n\n建议：使用页面内「导出备份」功能生成的文件进行导入");
+        }
+        fileDom.value = '';
+    }
+    reader.readAsText(file, 'utf-8');
+}
+function renderTodoItem(t){
+    let cssClass;
+    if(t.dueDate < todayStr){
+        cssClass = "task-overdue";
+    } else if(t.dueDate === todayStr){
+        cssClass = "task-today-undone";
+    } else {
+        cssClass = "task-future";
+    }
+    let loopTip = '';
+    if(t.loopRemain > 0){
+        loopTip = `<span class="task-loop-tip">循环剩余${t.loopRemain}次，间隔${t.loopGap}天</span>`;
+    }
+    let tomorrowTip = "";
+    let extraBg = "";
+    if(t.dueDate === tomorrowStr){
+        tomorrowTip = `<span style="color:#e67700;font-weight:bold;margin-right:4px;">⚠️明日</span>`;
+        extraBg = "background-color:#fff9cc;";
+    }
+    return `
+    <div class="task-item ${cssClass}" style="${extraBg}">
+        <input type="checkbox" ${t.checked ? 'checked' : ''} onchange="toggleCheck('${t.id}')">
+        <div class="task-content">
+            <div class="task-title-row">
+                <div class="task-title">${tomorrowTip}${escapeHtml(t.title)}</div>
+                ${loopTip}
+            </div>
+            ${t.desc ? `<div class="task-meta">${escapeHtml(t.desc)}</div>` : ''}
+            <div class="task-meta">截止：${t.dueDate} ⏳未完成</div>
+        </div>
+        <div class="task-actions">
+            <button class="btn-sm btn-success" onclick="completeById('${t.id}')">完成</button>
+            <button class="btn-sm btn-warning" onclick="openEditModal('${t.id}', false)">编辑</button>
+            <button class="btn-sm btn-danger" onclick="delTask('${t.id}')">删除</button>
+        </div>
+    </div>`;
+}
+function renderHistoryItem(t){
+    return `
+    <div class="task-item task-history">
+        <div class="task-content">
+            <div class="task-title task-done-text">${escapeHtml(t.title)}</div>
+            ${t.desc ? `<div class="task-meta">${escapeHtml(t.desc)}</div>` : ''}
+            <div class="task-meta">截止：${t.dueDate}｜完成日期：${t.finishDate || '-'} ✅已完成</div>
+        </div>
+        <div class="task-actions">
+            <button class="btn-sm btn-warning" onclick="openEditModal('${t.id}', true)">修改描述</button>
+            <button class="btn-sm btn-danger" onclick="delTask('${t.id}')">删除</button>
+        </div>
+    </div>`;
+}
+function renderAll(){
+    loadStorage();
+    const todoKeyword = (document.getElementById('todoSearchInput')?.value||'').toLowerCase().trim();
+    let overdueList = taskList.filter(x => x.dueDate < todayStr && !x.done);
+    let todayList = taskList.filter(x => x.dueDate === todayStr && !x.done);
+    let futureList = taskList.filter(x => x.dueDate > todayStr && !x.done);
+    if(todoKeyword){
+        const filterFn = item=>{
+            const t = (item.title||'').toLowerCase();
+            const d = (item.desc||'').toLowerCase();
+            return t.includes(todoKeyword) || d.includes(todoKeyword);
+        };
+        overdueList = overdueList.filter(filterFn);
+        todayList = todayList.filter(filterFn);
+        futureList = futureList.filter(filterFn);
+    }
+    const tomorrowItems = futureList.filter(t=> t.dueDate === tomorrowStr);
+    const otherFutureItems = futureList.filter(t=> t.dueDate > todayStr && t.dueDate !== tomorrowStr);
+    otherFutureItems.sort((a,b)=>{
+        if(a.dueDate < b.dueDate) return -1;
+        if(a.dueDate > b.dueDate) return 1;
+        return 0;
+    });
+    const sortedFutureList = [...tomorrowItems, ...otherFutureItems];
+    document.getElementById('statOverdue').innerText = overdueList.length;
+    document.getElementById('statTodayUndo').innerText = todayList.length;
+    document.getElementById('statFuture').innerText = futureList.length;
+    document.getElementById('statTodoAll').innerText = overdueList.length + todayList.length + futureList.length;
+    renderGroup('groupOverdue', overdueList.map(renderTodoItem));
+    renderGroup('groupToday', todayList.map(renderTodoItem));
+    renderGroup('groupFuture', sortedFutureList.map(renderTodoItem));
+}
+function renderHistoryView(){
+    loadStorage();
+    const keyword = (document.getElementById('historySearchInput').value || '').toLowerCase().trim();
+    let historyAll = [...taskList.filter(x => x.done)];
+    historyAll.sort((a,b)=>{
+        let fa = a.finishDate;
+        let fb = b.finishDate;
+        if(!fa) fa = "0000-00-00";
+        if(!fb) fb = "0000-00-00";
+        if(fb > fa) return -1;
+        if(fb < fa) return 1;
+        return 0;
+    });
+    if(keyword){
+        historyAll = historyAll.filter(item => {
+            const t = (item.title || '').toLowerCase();
+            const d = (item.desc || '').toLowerCase();
+            return t.includes(keyword) || d.includes(keyword);
+        });
+    }
+    document.getElementById('statHistoryTotal').innerText = historyAll.length;
+    renderGroup('groupHistory', historyAll.map(renderHistoryItem));
+}
+function renderGroup(domId, htmlArr){
+    const dom = document.getElementById(domId);
+    if(htmlArr.length === 0){
+        dom.innerHTML = `<div class="empty-tip">暂无任务</div>`;
+    } else {
+        dom.innerHTML = htmlArr.join('');
+    }
+}
+function scrollToBottom(){
+    window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth'
+    });
+}
+loadStorage();
+document.getElementById('taskDueDate').value = todayStr;
+switchPage('main');
+</script>
+</body>
+</html>
